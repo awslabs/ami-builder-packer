@@ -1,0 +1,36 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Installing Packer"
+      - curl -o packer.zip https://releases.hashicorp.com/packer/0.12.3/packer_0.12.3_linux_amd64.zip && unzip packer.zip
+      - echo "Validating Packer template"
+      - ./packer validate packer_cis.json
+      - echo "Installing JQ"
+      - curl -o jq https://stedolan.github.io/jq/download/linux64/jq
+      - chmod +x ./jq
+  build:
+    commands:
+      # CodeBuild leverages IAM Task Role but Packer doesn't support it yet
+      # More info: https://github.com/mitchellh/packer/issues/4279
+      - echo "Configuring AWS credentials"
+      - curl -qL 169.254.170.2/${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI} > aws_credentials.json
+      - aws configure set region ${AWS_REGION}
+      - aws configure set aws_access_key_id `./jq -r '.AccessKeyId' aws_credentials.json`
+      - aws configure set aws_secret_access_key `./jq -r '.SecretAccessKey' aws_credentials.json`
+      - aws configure set aws_session_token `./jq -r '.Token' aws_credentials.json`
+      - ./packer build -color=false packer_cis.json | tee build.log
+  post_build:
+    commands:
+      - egrep "${AWS_REGION}\:\sami\-" build.log | cut -d' ' -f2 > ami_id.txt
+      # Packer doesn't return non-zero status; we must do that if Packer build failed
+      - test -s ami_id.txt || exit 1
+      - sed -i.bak "s/<<AMI-ID>>/$(cat ami_id.txt)/g" ami_builder_event.json
+      - aws events put-events --entries file://ami_builder_event.json
+      - echo "build completed on `date`"
+artifacts:
+  files:
+    - ami_builder_event.json
+    - build.log
+  discard-paths: yes

@@ -1,0 +1,28 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: true    # gather OS info that is made available for tasks/roles
+  become: yes           # majority of CIS tasks require root
+  vars:
+    # CIS Controls whitepaper:  http://bit.ly/2mGAmUc
+    # AWS CIS Whitepaper:       http://bit.ly/2m2Ovrh
+    cis_level_1_exclusions:
+    # 3.4.2 and 3.4.3 effectively blocks access to all ports to the machine
+    ## This can break automation; ignoring it as there are stronger mechanisms than that
+      - 3.4.2 
+      - 3.4.3
+    # Cloudwatch Logs will be used instead of Rsyslog/Syslog-ng
+    ## Same would be true if any other software that doesn't support Rsyslog/Syslog-ng mechanisms
+      - 4.2.1.4
+      - 4.2.2.4
+      - 4.2.2.5
+    # Autofs is no longer installed and we need to ignore it or else will fail
+      - 1.1.19
+    # Cloudwatch Logs Role configuration
+    logs:
+      - file: /var/log/messages
+        group_name: "system_logs"
+  roles:
+    - common
+    - anthcourtney.cis-amazon-linux
+    - dharrisio.aws-cloudwatch-logs-agent

@@ -1,0 +1,66 @@
+{
+  "variables": {
+    "vpc": "{{env `BUILD_VPC_ID`}}",
+    "subnet": "{{env `BUILD_SUBNET_ID`}}",
+    "aws_region": "{{env `AWS_REGION`}}",
+    "ami_name": "Prod-CIS-Latest-AMZN-{{isotime \"02-Jan-06 03_04_05\"}}"
+  },
+  "builders": [{
+    "name": "AWS AMI Builder - CIS",
+    "type": "amazon-ebs",
+    "region": "{{user `aws_region`}}",
+    "source_ami_filter": {
+        "filters": {
+            "virtualization-type": "hvm",
+            "name": "amzn-ami*-ebs",
+            "root-device-type": "ebs"
+        },
+        "owners": ["137112412989", "591542846629", "801119661308",
+                   "102837901569", "013907871322", "206029621532", 
+                   "286198878708", "443319210888"],
+        "most_recent": true
+    },
+    "instance_type": "t2.micro",
+    "ssh_username": "ec2-user",
+    "ami_name": "{{user `ami_name` | clean_ami_name}}",
+    "tags": {
+      "Name": "{{user `ami_name`}}"
+    },
+    "run_tags": { 
+      "Name": "{{user `ami_name`}}"
+    },
+    "run_volume_tags": {
+      "Name": "{{user `ami_name`}}"
+    },
+    "snapshot_tags": {
+      "Name": "{{user `ami_name`}}"
+    },
+    "ami_description": "Amazon Linux CIS with Cloudwatch Logs agent",
+    "associate_public_ip_address": "true",
+    "vpc_id": "{{user `vpc`}}",
+    "subnet_id": "{{user `subnet`}}"
+  }],
+  "provisioners": [
+    {
+        "type": "shell",
+        "inline": [
+            "sudo pip install ansible"
+        ]
+    }, 
+    {
+        "type": "ansible-local",
+        "playbook_file": "ansible/playbook.yaml",
+        "role_paths": [
+            "ansible/roles/common"
+        ],
+        "playbook_dir": "ansible",
+        "galaxy_file": "ansible/requirements.yaml"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "rm .ssh/authorized_keys ; sudo rm /root/.ssh/authorized_keys"
+      ]
+    }
+  ]
+}

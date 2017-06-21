@@ -1,0 +1,7 @@
+---
+
+# Ensure all packages have been patched
+- name: upgrade all packages
+  yum:
+    name: "*"
+    state: latest
