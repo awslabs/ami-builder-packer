@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - echo "Installing Packer"
-      - curl -o packer.zip https://releases.hashicorp.com/packer/0.12.3/packer_0.12.3_linux_amd64.zip && unzip packer.zip
+      - curl -o packer.zip https://releases.hashicorp.com/packer/1.0.3/packer_1.0.3_linux_amd64.zip && unzip packer.zip
       - echo "Validating Packer template"
       - ./packer validate packer_cis.json
       - echo "Installing JQ"
@@ -12,14 +12,6 @@ phases:
       - chmod +x ./jq
   build:
     commands:
-      # CodeBuild leverages IAM Task Role but Packer doesn't support it yet
-      # More info: https://github.com/mitchellh/packer/issues/4279
-      - echo "Configuring AWS credentials"
-      - curl -qL 169.254.170.2/${AWS_CONTAINER_CREDENTIALS_RELATIVE_URI} > aws_credentials.json
-      - aws configure set region ${AWS_REGION}
-      - aws configure set aws_access_key_id `./jq -r '.AccessKeyId' aws_credentials.json`
-      - aws configure set aws_secret_access_key `./jq -r '.SecretAccessKey' aws_credentials.json`
-      - aws configure set aws_session_token `./jq -r '.Token' aws_credentials.json`
       - ./packer build -color=false packer_cis.json | tee build.log
   post_build:
     commands:
