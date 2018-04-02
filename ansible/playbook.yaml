@@ -7,10 +7,11 @@
     # CIS Controls whitepaper:  http://bit.ly/2mGAmUc
     # AWS CIS Whitepaper:       http://bit.ly/2m2Ovrh
     cis_level_1_exclusions:
-    # 3.4.2 and 3.4.3 effectively blocks access to all ports to the machine
+    # 3.4.2, 3.4.3 and 3.6.2 effectively blocks access to all ports to the machine
     ## This can break automation; ignoring it as there are stronger mechanisms than that
       - 3.4.2 
       - 3.4.3
+      - 3.6.2
     # Cloudwatch Logs will be used instead of Rsyslog/Syslog-ng
     ## Same would be true if any other software that doesn't support Rsyslog/Syslog-ng mechanisms
       - 4.2.1.4
@@ -18,6 +19,8 @@
       - 4.2.2.5
     # Autofs is no longer installed and we need to ignore it or else will fail
       - 1.1.19
+    # Password reuse limit task fails due to AttributionError in Ansible code; skipping
+      - 5.3.3
     # Cloudwatch Logs Role configuration
     logs:
       - file: /var/log/messages
