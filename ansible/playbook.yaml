@@ -28,4 +28,4 @@
   roles:
     - common
     - anthcourtney.cis-amazon-linux
-    - dharrisio.aws-cloudwatch-logs-agent
+    # - dharrisio.aws-cloudwatch-logs-agent
