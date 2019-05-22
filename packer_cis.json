@@ -44,7 +44,7 @@
   "provisioners": [{
       "type": "shell",
       "inline": [
-        "sudo pip install ansible"
+        "sudo pip install ansible==2.7.9"
       ]
     },
     {
